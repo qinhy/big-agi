@@ -74,6 +74,22 @@ const chatGenerateWithFunctionsOutputSchema = z.union([
   }),
 ]);
 
+export const modelDescriptionSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  created: z.number(),
+  updated: z.number().optional(),
+  description: z.string(),
+  contextWindow: z.number(),
+  hidden: z.boolean().optional(),
+});
+
+export type ModelDescriptionSchema = z.infer<typeof modelDescriptionSchema>;
+
+export const listModelsOutputSchema = z.object({
+  models: z.array(modelDescriptionSchema),
+});
+
 
 export const llmOpenAIRouter = createTRPCRouter({
 
@@ -237,7 +253,7 @@ export function openAIAccess(access: AccessSchema, apiPath: string): { headers: 
   // Helicone key
   const heliKey = access.heliKey || process.env.HELICONE_API_KEY || '';
 
-  // warn if no key - only for default (unoverridden) hosts
+  // warn if no key - only for default (non-overridden) hosts
   if (!oaiKey && oaiHost.indexOf(DEFAULT_OPENAI_HOST) !== -1)
     throw new Error('Missing OpenAI API Key. Add it on the UI (Models Setup) or server side (your deployment).');
 

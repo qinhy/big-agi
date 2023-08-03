@@ -74,7 +74,7 @@ function getLLMAndVendorOrThrow(llmId: DLLMId) {
  * @param abortSignal used to initiate a client-side abort of the fetch request to the API endpoint
  * @param editMessage callback when a piece of a message (text, model name, typing..) is received
  */
-async function vendorStreamChat(vendor: ModelVendor, llm: DLLM, messages: VChatMessageIn[], abortSignal: AbortSignal, editMessage: (updatedMessage: Partial<DMessage>, done: boolean) => void) {
+async function vendorStreamChat<TSourceSetup = unknown>(vendor: ModelVendor<TSourceSetup>, llm: DLLM, messages: VChatMessageIn[], abortSignal: AbortSignal, editMessage: (updatedMessage: Partial<DMessage>, done: boolean) => void) {
 
   // access params (source)
   const sourceSetup = vendor.normalizeSetup(llm._source.setup);

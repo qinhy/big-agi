@@ -16,9 +16,9 @@ export const isValidOpenAIApiKey = (apiKey?: string) => !!apiKey && apiKey.start
 export interface SourceSetupOpenAI {
   oaiKey: string;
   oaiOrg: string;
-  oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
-  heliKey: string;  // helicone key (works in conjunction with oaiHost)
-  moderationCheck: boolean;
+  oaiHost: string;                // to use OpenAI-compatible non-default hosts (full origin path)
+  heliKey: string;                // helicone key (works in conjunction with oaiHost)
+  moderationCheck: boolean;       // whether to check for moderation (per-source, not per-net - shall we change?)
 }
 
 export interface LLMOptionsOpenAI {

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '~/modules/trpc/trpc.server';
 
-import { historySchema, httpPOSTorTRPCError, modelSchema } from '~/modules/llms/openai/openai.router';
+import { historySchema, httpPOSTorTRPCError, listModelsOutputSchema, modelSchema } from '~/modules/llms/openai/openai.router';
 
 import { AnthropicWire } from './anthropic.types';
 import { TRPCError } from '@trpc/server';
@@ -15,28 +15,17 @@ const anthropicAccessSchema = z.object({
   anthropicHost: z.string().trim(),
 });
 
-export const chatGenerateSchema = z.object({ access: anthropicAccessSchema, model: modelSchema, history: historySchema });
+const chatGenerateSchema = z.object({ access: anthropicAccessSchema, model: modelSchema, history: historySchema });
 
 const listModelsSchema = z.object({ access: anthropicAccessSchema });
 
 
 // Output Schemas
 
-const chatGeneratOutputSchema = z.object({
+const chatGenerateOutputSchema = z.object({
   role: z.enum(['assistant', 'system', 'user']),
   content: z.string(),
   finish_reason: z.union([z.enum(['stop', 'length']), z.null()]),
-});
-
-const listModelsOutputSchema = z.object({
-  models: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    created: z.number(),
-    description: z.string(),
-    contextWindow: z.number(),
-    hidden: z.boolean().optional(),
-  })),
 });
 
 
@@ -47,7 +36,7 @@ export const llmAnthropicRouter = createTRPCRouter({
    */
   chatGenerate: publicProcedure
     .input(chatGenerateSchema)
-    .output(chatGeneratOutputSchema)
+    .output(chatGenerateOutputSchema)
     .mutation(async ({ input }) => {
 
       const { access, model, history } = input;
@@ -92,21 +81,21 @@ export const llmAnthropicRouter = createTRPCRouter({
         models: [
           {
             id: 'claude-2.0',
-            name: 'Claude 2',
+            label: 'Claude 2',
             created: roundTime('2023-07-11'),
             description: 'Claude-2 is the latest version of Claude',
             contextWindow: 100000,
           },
           {
             id: 'claude-instant-1.1',
-            name: 'Claude Instant 1.1',
+            label: 'Claude Instant 1.1',
             created: roundTime('2023-03-14'),
             description: 'Precise and fast',
             contextWindow: 100000,
           },
           {
             id: 'claude-1.3',
-            name: 'Claude 1.3',
+            label: 'Claude 1.3',
             created: roundTime('2023-03-14'),
             description: 'Claude 1.3 is the latest version of Claude v1',
             contextWindow: 100000,
@@ -114,7 +103,7 @@ export const llmAnthropicRouter = createTRPCRouter({
           },
           {
             id: 'claude-1.0',
-            name: 'Claude 1',
+            label: 'Claude 1',
             created: roundTime('2023-03-14'),
             description: 'Claude 1.0 is the first version of Claude',
             contextWindow: 9000,

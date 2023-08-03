@@ -10,6 +10,7 @@ import { Link } from '~/common/components/Link';
 import { settingsGap } from '~/common/theme';
 
 import { LLMOptionsOpenAI } from '~/modules/llms/openai/openai.vendor';
+import { ModelDescriptionSchema } from '~/modules/llms/openai/openai.router';
 
 import { DLLM, DModelSource, DModelSourceId } from '../llm.types';
 import { hasServerKeyAnthropic, isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor';
@@ -35,7 +36,7 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
     access: { anthropicKey, anthropicHost },
   }, {
     enabled: !hasModels && shallFetchSucceed,
-    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => anthropicModelToDLLM(model, source))),
+    onSuccess: models => source && useModelsStore.getState().addLLMs(models.models.map(model => modelDescriptionToDLLM(model, source))),
     staleTime: Infinity,
   });
 
@@ -71,10 +72,10 @@ export function AnthropicSourceSetup(props: { sourceId: DModelSourceId }) {
 }
 
 
-function anthropicModelToDLLM(model: { id: string, created: number, description: string, name: string, contextWindow: number, hidden?: boolean }, source: DModelSource): DLLM<LLMOptionsOpenAI> {
+export function modelDescriptionToDLLM(model: ModelDescriptionSchema, source: DModelSource): DLLM<LLMOptionsOpenAI> {
   return {
     id: `${source.id}-${model.id}`,
-    label: model.name,
+    label: model.label,
     created: model.created,
     description: model.description,
     tags: [], // ['stream', 'chat'],

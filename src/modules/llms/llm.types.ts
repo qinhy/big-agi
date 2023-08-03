@@ -4,7 +4,7 @@ import type { VChatFunctionIn, VChatMessageIn, VChatMessageOrFunctionCallOut, VC
 
 export type DLLMId = string;
 export type DModelSourceId = string;
-export type ModelVendorId = 'anthropic' | 'localai' | 'oobabooga' | 'openai';
+export type ModelVendorId = 'anthropic' | 'azure' | 'localai' | 'oobabooga' | 'openai';
 
 
 /// Large Language Model - a model that can generate text
@@ -12,6 +12,7 @@ export interface DLLM<TLLMOptions = unknown> {
   id: DLLMId;
   label: string;
   created: number | 0;
+  updated?: number | 0;
   description: string;
   tags: string[]; // UNUSED for now
   contextTokens: number;
