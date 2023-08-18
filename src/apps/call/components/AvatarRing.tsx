@@ -14,19 +14,20 @@ const cssScaleKeyframes = keyframes`
     transform: scale(1);
   }`;
 
-export function AvatarRing(props: { symbol: string, isRinging: boolean, onClick: () => void }) {
+export function AvatarRing(props: { symbol: string, imageUrl?: string, isRinging: boolean, onClick: () => void }) {
   return (
     <Avatar
       variant='soft' color='neutral'
       onClick={props.onClick}
+      src={props.imageUrl}
       sx={{
         '--Avatar-size': { xs: '160px', md: '200px' },
         '--variant-borderWidth': '4px',
-        boxShadow: 'md',
+        boxShadow: !props.imageUrl ? 'md' : null,
         fontSize: { xs: '100px', md: '120px' },
       }}
     >
-      <Box
+      {!props.imageUrl && <Box
         sx={{
           ...(props.isRinging
             ? { animation: `${cssScaleKeyframes} 1.4s ease-in-out infinite` }
@@ -34,7 +35,7 @@ export function AvatarRing(props: { symbol: string, isRinging: boolean, onClick:
         }}
       >
         {props.symbol}
-      </Box>
+      </Box>}
     </Avatar>
   );
 }

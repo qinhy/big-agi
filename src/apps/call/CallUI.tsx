@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { shallow } from 'zustand/shallow';
+import { useRouter } from 'next/router';
 
 import { Box, Card, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -69,6 +70,7 @@ export function CallUI(props: {
   const responseAbortController = React.useRef<AbortController | null>(null);
 
   // external state
+  const { push: routerPush } = useRouter();
   const { chatLLMId, chatLLMDropdown } = useChatLLMDropdown();
   const { chatTitle, messages } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
@@ -78,6 +80,8 @@ export function CallUI(props: {
     };
   }, shallow);
   const persona = SystemPurposes[props.personaId as SystemPurposeId] ?? undefined;
+  const personaVoiceId = persona?.voices?.elevenLabs?.voiceId ?? undefined;
+  const personaSystemMessage = persona?.systemMessage ?? undefined;
 
   // hooks and speech
   const [speechInterim, setSpeechInterim] = React.useState<SpeechResult | null>(null);
@@ -120,9 +124,6 @@ export function CallUI(props: {
   React.useEffect(() => {
     if (!isConnected) return;
 
-    const firstMessage: string = ['Hello?', 'Hey!'][Math.random() > 0.5 ? 1 : 0];
-    setCallMessages([createDMessage('assistant', firstMessage)]);
-
     // show the call timer
     setCallElapsedTime('00:00');
     const start = Date.now();
@@ -133,8 +134,18 @@ export function CallUI(props: {
       setCallElapsedTime(`${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`);
     }, 1000);
 
+    // seed the first message
+    const phoneMessages =
+      props.personaId === 'Russ'
+        ? ['Russ Hanneman here. Talk.', 'It\'s Russ. Spill the beans.', 'Hey, it\'s Russ. Make it quick.', 'You\'re on with Russ. Impress me.', 'Russ here. What\'s the deal?']
+        : ['Hello?', 'Hey!'];
+    const firstMessage = phoneMessages[Math.floor(Math.random() * phoneMessages.length)];
+
+    setCallMessages([createDMessage('assistant', firstMessage)]);
+    EXPERIMENTAL_speakTextStream(firstMessage, personaVoiceId).then();
+
     return () => clearInterval(interval);
-  }, [isConnected]);
+  }, [isConnected, personaVoiceId, props.personaId]);
 
   // [E] persona streaming response - upon new user message
   React.useEffect(() => {
@@ -148,6 +159,7 @@ export function CallUI(props: {
       // command: close the call
       case 'Goodbye.':
         setStage('ended');
+        setTimeout(() => routerPush('/'), 2000);
         return;
       // command: regenerate answer
       case 'Retry.':
@@ -163,11 +175,18 @@ export function CallUI(props: {
     // bail if no llm selected
     if (!chatLLMId) return;
 
+    // temp fix: when the chat has no messages, only assume a single system message
+    const chatMessages: { role: VChatMessageIn['role'], text: string }[] = messages.length > 0
+      ? messages
+      : personaSystemMessage
+        ? [{ role: 'system', text: personaSystemMessage }]
+        : [];
+
     // 'prompt' for a "telephone call"
     // FIXME: can easily run ouf of tokens - if this gets traction, we'll fix it
     const callPrompt: VChatMessageIn[] = [
       { role: 'system', content: 'You are having a phone call. Your response style is brief and to the point, and according to your personality, defined below.' },
-      ...messages.map(message => ({ role: message.role, content: message.text })),
+      ...chatMessages.map(message => ({ role: message.role, content: message.text })),
       { role: 'system', content: 'You are now on the phone call related to the chat above. Respect your personality and answer with short, friendly and accurate thoughtful lines.' },
       ...callMessages.map(message => ({ role: message.role, content: message.text })),
     ];
@@ -188,14 +207,14 @@ export function CallUI(props: {
     }).finally(() => {
       setPersonaTextInterim(null);
       setCallMessages(messages => [...messages, createDMessage('assistant', finalText + (error ? ` (ERROR: ${error.message || error.toString()})` : ''))]);
-      EXPERIMENTAL_speakTextStream(finalText).then();
+      EXPERIMENTAL_speakTextStream(finalText, personaVoiceId).then();
     });
 
     return () => {
       responseAbortController.current?.abort();
       responseAbortController.current = null;
     };
-  }, [isConnected, callMessages, chatLLMId, messages]);
+  }, [isConnected, callMessages, chatLLMId, messages, personaVoiceId, personaSystemMessage, routerPush]);
 
   // [E] Message interrupter
   const abortTrigger = isConnected && isRecordingSpeech;
@@ -238,7 +257,7 @@ export function CallUI(props: {
       {isConnected ? personaName : 'Hello'}
     </Typography>
 
-    <AvatarRing symbol={persona?.symbol || '?'} isRinging={isRinging} onClick={() => setAvatarClicked(avatarClicked + 1)} />
+    <AvatarRing symbol={persona?.symbol || '?'} imageUrl={persona?.imageUri} isRinging={isRinging} onClick={() => setAvatarClicked(avatarClicked + 1)} />
 
     <CallStatus
       callerName={isConnected ? undefined : personaName}
@@ -299,6 +318,7 @@ export function CallUI(props: {
 
     {/* DEBUG state */}
     {avatarClicked > 10 && (avatarClicked % 2 === 0) && <Card variant='outlined' sx={{ maxHeight: '25dvh', overflow: 'auto', whiteSpace: 'pre', py: 0, width: '100%' }}>
+      Special commands: Stop, Retry, Try Again, Restart, Goodbye.
       {JSON.stringify({ isSpeechEnabled, isRecordingAudio, speechInterim }, null, 2)}
     </Card>}
 
