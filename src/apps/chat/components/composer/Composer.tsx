@@ -4,6 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { Box, Button, ButtonGroup, Card, Grid, IconButton, ListDivider, ListItemDecorator, MenuItem, Stack, Textarea, Tooltip, Typography, useTheme } from '@mui/joy';
 import { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
+import CallIcon from '@mui/icons-material/Call';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import DataArrayIcon from '@mui/icons-material/DataArray';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -29,6 +30,7 @@ import { countModelTokens } from '~/common/util/token-counter';
 import { extractFilePathsWithCommonRadix } from '~/common/util/dropTextUtils';
 import { hideOnDesktop, hideOnMobile } from '~/common/theme';
 import { htmlTableToMarkdown } from '~/common/util/htmlTableToMarkdown';
+import { launchAppCall } from '~/common/routing';
 import { pdfToText } from '~/common/util/pdfToText';
 import { useChatStore } from '~/common/state/store-chats';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
@@ -178,10 +180,11 @@ export function Composer(props: {
     experimentalLabs: state.experimentalLabs,
   }), shallow);
   const { sentMessages, appendSentMessage, clearSentMessages, startupText, setStartupText } = useComposerStore();
-  const { assistantTyping, tokenCount: conversationTokenCount, stopTyping } = useChatStore(state => {
+  const { assistantTyping, tokenCount: conversationTokenCount, systemPurposeId, stopTyping } = useChatStore(state => {
     const conversation = state.conversations.find(conversation => conversation.id === props.conversationId);
     return {
       assistantTyping: conversation ? !!conversation.abortController : false,
+      systemPurposeId: conversation?.systemPurposeId ?? null,
       tokenCount: conversation ? conversation.tokenCount : 0,
       stopTyping: state.stopTyping,
     };
@@ -214,6 +217,8 @@ export function Composer(props: {
       appendSentMessage(text);
     }
   };
+
+  const handleCallClicked = () => props.conversationId && systemPurposeId && launchAppCall(props.conversationId, systemPurposeId);
 
   const handleToggleChatMode = (event: React.MouseEvent<HTMLAnchorElement>) =>
     setChatModeMenuAnchor(anchor => anchor ? null : event.currentTarget);
@@ -591,14 +596,19 @@ export function Composer(props: {
         <Grid xs={12} md={3}>
           <Stack spacing={2}>
 
-            <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'row', gap: { xs: 1, md: 2 } }}>
 
-              {/* [mobile-only] Sent messages arrow */}
+              {/* [mobile] Sent messages arrow */}
               {sentMessages.length > 0 && (
-                <IconButton disabled={!!sentMessagesAnchor} onClick={showSentMessages} sx={{ ...hideOnDesktop, mr: { xs: 1, md: 2 } }}>
+                <IconButton disabled={!!sentMessagesAnchor} onClick={showSentMessages} sx={hideOnDesktop}>
                   <KeyboardArrowUpIcon />
                 </IconButton>
               )}
+
+              {/* [mobile] call button */}
+              <Button color='success' disabled={!props.conversationId || !chatLLM} onClick={handleCallClicked} endDecorator={<CallIcon />} sx={hideOnDesktop}>
+                Call
+              </Button>
 
               {/* Send / Stop */}
               {assistantTyping
@@ -620,14 +630,19 @@ export function Composer(props: {
                 )}
             </Box>
 
-            {/* [desktop-only] row with Sent Messages button */}
-            <Stack direction='row' spacing={1} sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
+            {/* [desktop] */}
+            <Button color='success' disabled={!props.conversationId || !chatLLM} onClick={handleCallClicked} endDecorator={<CallIcon />} sx={hideOnMobile}>
+              Call
+            </Button>
+
+            {/* [desktop] ^ history */}
+            <Box sx={{ ...hideOnMobile, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'flex-end' }}>
               {sentMessages.length > 0 && (
                 <Button disabled={!!sentMessagesAnchor} fullWidth variant='plain' color='neutral' startDecorator={<KeyboardArrowUpIcon />} onClick={showSentMessages}>
                   History
                 </Button>
               )}
-            </Stack>
+            </Box>
 
           </Stack>
         </Grid>
