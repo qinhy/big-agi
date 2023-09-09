@@ -5,10 +5,10 @@ let nextConfig = {
     return [
       {
         source: '/:path*',
-        destination: 'http://localhost:3000/:path*',
+        destination: 'http://host.docker.internal:3000/:path*',
       },
       // {
-      //   source: '/ChatGPT-Next-Web/:path*',
+      //   source: '/:path*',
       //   destination: 'http://localhost:3000/:path*',
       // },
     ]

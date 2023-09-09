@@ -36,7 +36,7 @@ COPY --from=build-target /usr/src/app/node_modules node_modules
 COPY --from=build-target /usr/src/app/.next .next
 COPY --from=build-target /usr/src/app/public public
 
-# Expose port 3000 for the application to listen on
-EXPOSE 3000
+# Expose port 4000 for the application to listen on
+EXPOSE 4000
 
-CMD ["next", "start"]
+CMD ["next", "start", "-p", "4000"]
