@@ -1,5 +1,18 @@
 /** @type {import('next').NextConfig} */
 let nextConfig = {
+  // basePath:'/ui',
+  async rewrites() {
+    return [
+      {
+        source: '/:path*',
+        destination: 'http://localhost:3000/:path*',
+      },
+      // {
+      //   source: '/ChatGPT-Next-Web/:path*',
+      //   destination: 'http://localhost:3000/:path*',
+      // },
+    ]
+  },
   reactStrictMode: true,
   env: {
     // defaults to TRUE, unless API Keys are set at build time; this flag is used by the UI

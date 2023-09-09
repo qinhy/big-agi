@@ -6,9 +6,10 @@
     "node": "^18.0.0"
   },
   "scripts": {
+    "export": "next export",
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 4000",
     "lint": "next lint"
   },
   "dependencies": {
@@ -25,6 +26,7 @@
     "@trpc/next": "^10.37.1",
     "@trpc/react-query": "^10.37.1",
     "@trpc/server": "^10.37.1",
+    "@types/styled-components": "^5.1.26",
     "@vercel/analytics": "^1.0.2",
     "browser-fs-access": "^0.34.1",
     "eventsource-parser": "^1.0.0",
@@ -36,7 +38,9 @@
     "react-dom": "^18.2.0",
     "react-katex": "^3.0.1",
     "react-markdown": "^8.0.7",
+    "react-router-dom": "^6.15.0",
     "remark-gfm": "^3.0.1",
+    "styled-components": "^6.0.7",
     "superjson": "^1.13.1",
     "tesseract.js": "^4.1.1",
     "uuid": "^9.0.0",
